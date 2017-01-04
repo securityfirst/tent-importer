@@ -51,11 +51,9 @@ func main() {
 		for _, s := range c.Subcategories() {
 			sub := c.Sub(s)
 			writeCmp(dest, sub)
+			writeCmp(dest, sub.Checks())
 			for _, item := range sub.Items() {
 				writeCmp(dest, &item)
-			}
-			for _, check := range sub.Checks() {
-				writeCmp(dest, &check)
 			}
 		}
 	}
@@ -100,6 +98,7 @@ func transform(categories map[string]*component.Category, dir string, f os.FileI
 			Category    string `json:"category`
 			Subcategory string `json:"subcategory`
 			Difficulty  string `json:"difficulty`
+			NoCheck     bool   `json:""nocheck"`
 		}
 		if err := json.NewDecoder(file).Decode(&list); err != nil {
 			log.Println(name, err)
@@ -127,36 +126,27 @@ func transform(categories map[string]*component.Category, dir string, f os.FileI
 				}
 				cat.Add(sub)
 			}
-			// item/check
-			var (
-				fn func() error
-				id *string
-			)
-			if v.Title != "" {
-				item := component.Item{
-					Id:         MakeId(v.Title),
-					Title:      v.Title,
-					Body:       v.Body,
-					Difficulty: v.Difficulty,
-					Order:      float64(len(sub.Items())),
-				}
-				fn = func() error { return sub.AddItem(&item) }
-				id = &item.Id
-			} else {
-				check := component.Check{
-					Id:         MakeId(v.Text),
+			// check
+			if v.Title == "" {
+				sub.AddChecks(component.Check{
 					Text:       v.Text,
 					Difficulty: v.Difficulty,
-					Order:      float64(len(sub.Checks())),
-				}
-				fn = func() error { return sub.AddCheck(&check) }
-				id = &check.Id
+					NoCheck:    v.NoCheck,
+				})
+				continue
 			}
-			baseName := *id
+			// item
+			var item = component.Item{
+				Id:         MakeId(v.Title),
+				Title:      v.Title,
+				Body:       v.Body,
+				Difficulty: v.Difficulty,
+				Order:      float64(len(sub.Items())),
+			}
+			baseName := item.Id
 			for i := 0; ; i++ {
-				err := fn()
-				if err != nil {
-					*id = fmt.Sprintf("%s-%d", baseName, i)
+				if err := sub.AddItem(&item); err != nil {
+					item.Id = fmt.Sprintf("%s-%d", baseName, i)
 					continue
 				}
 				break
