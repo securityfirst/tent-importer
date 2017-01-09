@@ -1,2 +1,2 @@
-# octo-importer
-Set of importers for octo
+# tent-importer
+Set of importers for Tent
