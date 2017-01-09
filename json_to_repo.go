@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/securityfirst/octo/repo/component"
+	"github.com/securityfirst/tent/repo/component"
 )
 
 var (
