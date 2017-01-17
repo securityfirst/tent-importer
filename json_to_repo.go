@@ -51,7 +51,9 @@ func main() {
 		for _, s := range c.Subcategories() {
 			sub := c.Sub(s)
 			writeCmp(dest, sub)
-			writeCmp(dest, sub.Checks())
+			if checks := sub.Checks(); checks.HasChildren() {
+				writeCmp(dest, checks)
+			}
 			for _, item := range sub.Items() {
 				writeCmp(dest, &item)
 			}
@@ -117,6 +119,9 @@ func transform(categories map[string]*component.Category, dir string, f os.FileI
 			cat := categories[catId]
 			// subcategory
 			subId := MakeId(v.Subcategory)
+			if subId == "" {
+				subId = "_"
+			}
 			sub := cat.Sub(subId)
 			if sub == nil {
 				sub = &component.Subcategory{
